@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 
 
+
+
 class Company(models.Model):
     owner = models.OneToOneField(
         settings.AUTH_USER_MODEL,
