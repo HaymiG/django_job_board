@@ -63,6 +63,8 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = "accounts.User"
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "accounts:profile"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -135,6 +137,14 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# Session Configuration for Security & UX
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 14  # 2 weeks in seconds
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript from accessing session cookie
+SESSION_COOKIE_SECURE = (not DEBUG)  # Only send cookie over HTTPS in production
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Clear session on browser close (optional)
+SESSION_SAVE_EVERY_REQUEST = False  # Only save on changes for performance
 
 
 # Internationalization
