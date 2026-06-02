@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Employer dashboard · Job Board{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="section-title h4 mb-1">Employer dashboard</h1>
+      <p class="text-muted small mb-0">Manage your jobs and applications</p>
+    </div>
+    <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary btn-sm">Back to profile</a>
+  </div>
+
+  <!-- Company Info -->
+  {% if company %}
+    <div class="auth-card mb-5">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+          <h2 class="h5 fw-semibold">{{ company.name }}</h2>
+          <p class="text-muted mb-2">{{ company.description|default:"No description added yet." }}</p>
+          {% if company.website %}
+            <a href="{{ company.website }}" target="_blank" rel="noopener" class="text-decoration-none">
+              <i class="bi bi-globe me-1"></i>{{ company.website }}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      <hr class="my-3">
+      <p class="small text-muted mb-0">
+        <i class="bi bi-calendar2-check me-1"></i>Member since {{ user.date_joined|date:"M j, Y" }}
+      </p>
+    </div>
+  {% else %}
+    <div class="auth-card mb-5 border-warning">
+      <div class="empty-state m-0">
+        <i class="bi bi-building display-6 d-block mb-3 opacity-50"></i>
+        <p class="fw-semibold mb-2">No company profile yet</p>
+        <p class="small mb-0">Contact support or visit the admin panel to create your company profile.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Statistics -->
+  <div class="row g-3 mb-5">
+    <div class="col-sm-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.posted_jobs }}</div>
+        <div class="stat-label">Posted jobs</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.total_applications }}</div>
+        <div class="stat-label">Applications received</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="stat-card stat-pending">
+        <div class="stat-value">{{ stats.pending_applications }}</div>
+        <div class="stat-label">Pending review</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="stat-card stat-accepted">
+        <div class="stat-value">{{ stats.posted_jobs }}</div>
+        <div class="stat-label">Active jobs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Posted Jobs List -->
+  <h3 class="h5 fw-semibold mb-3">Posted jobs</h3>
+  {% if jobs %}
+    <div class="row g-3">
+      {% for job in jobs %}
+        <div class="col-12">
+          <article class="job-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <h4 class="job-title h6 mb-1">{{ job.title }}</h4>
+                <p class="job-meta mb-2">
+                  <span><i class="bi bi-geo-alt me-1"></i>{{ job.location|default:"Remote" }}</span>
+                  <span class="mx-2">·</span>
+                  <span><i class="bi bi-briefcase me-1"></i>{{ job.job_type|default:"Full-time" }}</span>
+                  {% if job.is_active %}
+                    <span class="mx-2">·</span>
+                    <span class="badge badge-success">Active</span>
+                  {% endif %}
+                </p>
+                <p class="small text-muted mb-0">
+                  {{ job.applications.count }} application{{ job.applications.count|pluralize }}
+                </p>
+              </div>
+              <div class="ms-2 text-end">
+                <small class="d-block text-muted mb-2">Posted {{ job.created_at|date:"M j, Y" }}</small>
+                <div class="btn-group btn-group-sm" role="group">
+                  <a href="#" class="btn btn-outline-secondary" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <a href="#" class="btn btn-outline-danger" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="bi bi-briefcase display-6 d-block mb-3 opacity-50"></i>
+      <p class="fw-semibold mb-2">No jobs posted yet</p>
+      <p class="small mb-3">Start by posting your first job opening.</p>
+      <a href="#" class="btn btn-primary btn-sm">Post a job</a>
+    </div>
+  {% endif %}
+{% endblock %}

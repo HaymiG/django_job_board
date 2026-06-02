@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}My applications · Job Board{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="section-title h4 mb-1">My applications</h1>
+      <p class="text-muted small mb-0">Track your job applications and their status</p>
+    </div>
+    <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary btn-sm">Back to profile</a>
+  </div>
+
+  <!-- Application Stats -->
+  <div class="row g-3 mb-5">
+    <div class="col-sm-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.total_applications }}</div>
+        <div class="stat-label">Total applications</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="stat-card stat-pending">
+        <div class="stat-value">{{ stats.pending }}</div>
+        <div class="stat-label">Pending review</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="stat-card stat-reviewing">
+        <div class="stat-value">{{ stats.reviewing }}</div>
+        <div class="stat-label">In review</div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="stat-card stat-accepted">
+        <div class="stat-value">{{ stats.accepted }}</div>
+        <div class="stat-label">Accepted</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Applications List -->
+  {% if applications %}
+    <div class="row g-3">
+      {% for app in applications %}
+        <div class="col-12">
+          <article class="job-card">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h3 class="job-title h6 mb-1">{{ app.job.title }}</h3>
+                <p class="job-meta mb-2">
+                  <i class="bi bi-building me-1"></i>{{ app.job.company.name }}
+                  <span class="mx-2">·</span>
+                  <span class="badge badge-{{ app.get_status_display|lower }} rounded-pill">
+                    {{ app.get_status_display }}
+                  </span>
+                </p>
+              </div>
+              <small class="text-muted text-nowrap ms-2">Applied {{ app.created_at|date:"M j, Y" }}</small>
+            </div>
+            {% if app.cover_letter %}
+              <p class="small text-muted mb-0">
+                <i class="bi bi-file-text me-1"></i>Cover letter attached
+              </p>
+            {% endif %}
+          </article>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="bi bi-inbox display-6 d-block mb-3 opacity-50"></i>
+      <p class="fw-semibold mb-2">No applications yet</p>
+      <p class="small mb-3">Browse jobs on the homepage and apply when listings are available.</p>
+      <a href="{% url 'jobs:home' %}" class="btn btn-primary btn-sm">Browse jobs</a>
+    </div>
+  {% endif %}
+{% endblock %}
