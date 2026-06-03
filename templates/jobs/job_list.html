@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Job Listings · Job Board{% endblock %}
+
+{% block content %}
+  <section class="mb-5">
+    <h1 class="h3 mb-4">Job Listings</h1>
+
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <form method="get" class="row g-3">
+          <div class="col-md-6">
+            <input
+              type="text"
+              name="q"
+              class="form-control"
+              placeholder="Search by job title or location..."
+              value="{{ query }}"
+            />
+          </div>
+          <div class="col-md-4">
+            <select name="job_type" class="form-select">
+              <option value="">All job types</option>
+              {% for value, label in job_type_choices %}
+                <option value="{{ value }}" {% if job_type == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-search me-1"></i> Search
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Job Listings -->
+    {% if jobs %}
+      <div class="row g-3">
+        {% for job in jobs %}
+          <div class="col-12">
+            <div class="card job-card h-100">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <h5 class="card-title mb-1">
+                      <a
+                        href="{% url 'jobs:job_detail' pk=job.pk %}"
+                        class="text-decoration-none link-primary"
+                      >
+                        {{ job.title }}
+                      </a>
+                    </h5>
+                    <p class="text-muted small mb-0">
+                      <i class="bi bi-building me-1"></i> {{ job.company.name }}
+                    </p>
+                  </div>
+                  <span class="badge bg-light text-dark">{{ job.get_job_type_display }}</span>
+                </div>
+
+                <p class="card-text text-muted small mb-3">
+                  {{ job.description|truncatewords:20 }}
+                </p>
+
+                <div class="d-flex flex-wrap gap-2 align-items-center text-muted small mb-3">
+                  <span>
+                    <i class="bi bi-geo-alt me-1"></i> {{ job.location }}
+                  </span>
+                  {% if job.salary_min and job.salary_max %}
+                    <span>
+                      <i class="bi bi-cash-coin me-1"></i>
+                      ${{ job.salary_min|floatformat:0 }} - ${{ job.salary_max|floatformat:0 }} {{ job.salary_currency }}
+                    </span>
+                  {% endif %}
+                  <span class="ms-auto text-muted" title="{{ job.created_at }}">
+                    <i class="bi bi-clock me-1"></i> {{ job.created_at|timesince }} ago
+                  </span>
+                </div>
+
+                <a
+                  href="{% url 'jobs:job_detail' pk=job.pk %}"
+                  class="btn btn-sm btn-outline-primary"
+                >
+                  View details <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if jobs.has_other_pages %}
+        <nav class="mt-5" aria-label="Page navigation">
+          <ul class="pagination justify-content-center">
+            {% if jobs.has_previous %}
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?page=1{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}"
+                >
+                  <i class="bi bi-chevron-double-left"></i> First
+                </a>
+              </li>
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?page={{ jobs.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}"
+                >
+                  <i class="bi bi-chevron-left"></i> Previous
+                </a>
+              </li>
+            {% endif %}
+
+            <li class="page-item active">
+              <span class="page-link">
+                Page {{ jobs.number }} of {{ jobs.paginator.num_pages }}
+              </span>
+            </li>
+
+            {% if jobs.has_next %}
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?page={{ jobs.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}"
+                >
+                  Next <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?page={{ jobs.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}"
+                >
+                  Last <i class="bi bi-chevron-double-right"></i>
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        No jobs found. Try adjusting your search filters.
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
