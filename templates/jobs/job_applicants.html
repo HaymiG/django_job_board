@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Applicants: {{ job.title }} · Job Board{% endblock %}
+
+{% block content %}
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <a href="{% url 'accounts:employer_dashboard' %}" class="text-decoration-none small d-inline-block mb-2">
+        <i class="bi bi-arrow-left me-1"></i> Back to dashboard
+      </a>
+      <h1 class="section-title h4 mb-1">Applicants for "{{ job.title }}"</h1>
+      <p class="text-muted small mb-0">
+        <i class="bi bi-geo-alt me-1"></i> {{ job.location }}
+        <span class="mx-2">·</span>
+        {{ applications|length }} applicant{{ applications|length|pluralize }}
+      </p>
+    </div>
+    <a href="{% url 'jobs:job_detail' pk=job.pk %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-eye me-1"></i> View job listing
+    </a>
+  </div>
+
+  <!-- Status Filter -->
+  <div class="card mb-4">
+    <div class="card-body py-2">
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <span class="small fw-semibold text-muted me-2">Filter:</span>
+        <a href="{% url 'jobs:job_applicants' pk=job.pk %}"
+           class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+          All
+        </a>
+        {% for value, label in status_choices %}
+          <a href="{% url 'jobs:job_applicants' pk=job.pk %}?status={{ value }}"
+             class="btn btn-sm {% if status_filter == value %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            {{ label }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Applicant List -->
+  {% if applications %}
+    <div class="row g-3">
+      {% for app in applications %}
+        <div class="col-12">
+          <div class="applicant-card">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="d-flex gap-3 align-items-start flex-grow-1">
+                <!-- Avatar -->
+                <div class="applicant-avatar">
+                  {{ app.applicant.username|make_list|first|upper }}
+                </div>
+                <!-- Info -->
+                <div class="flex-grow-1">
+                  <h3 class="h6 fw-semibold mb-1">
+                    {{ app.applicant.get_full_name|default:app.applicant.username }}
+                  </h3>
+                  <p class="small text-muted mb-2">
+                    <i class="bi bi-envelope me-1"></i> {{ app.applicant.email|default:"No email" }}
+                    <span class="mx-2">·</span>
+                    <i class="bi bi-calendar3 me-1"></i> Applied {{ app.created_at|date:"M j, Y" }}
+                  </p>
+
+                  <!-- Cover Letter Preview -->
+                  {% if app.cover_letter %}
+                    <div class="cover-letter-preview mb-2">
+                      <p class="small mb-0">
+                        <i class="bi bi-chat-quote me-1 text-muted"></i>
+                        {{ app.cover_letter|truncatewords:40 }}
+                      </p>
+                    </div>
+                  {% endif %}
+
+                  <!-- Resume Link -->
+                  {% if app.resume %}
+                    <a href="{{ app.resume.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary me-2">
+                      <i class="bi bi-file-earmark-pdf me-1"></i> Download resume
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Right Side: Status + Actions -->
+              <div class="text-end ms-3" style="min-width: 140px;">
+                <span class="badge badge-{{ app.get_status_display|lower }} rounded-pill px-3 py-2 mb-3 d-inline-block">
+                  {{ app.get_status_display }}
+                </span>
+
+                <!-- Status Actions -->
+                <div class="status-actions">
+                  {% if app.status != "reviewing" %}
+                    <form method="post" action="{% url 'jobs:update_application_status' pk=app.pk status='reviewing' %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-info" title="Mark as Reviewing">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                    </form>
+                  {% endif %}
+                  {% if app.status != "accepted" %}
+                    <form method="post" action="{% url 'jobs:update_application_status' pk=app.pk status='accepted' %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-success" title="Accept">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    </form>
+                  {% endif %}
+                  {% if app.status != "rejected" %}
+                    <form method="post" action="{% url 'jobs:update_application_status' pk=app.pk status='rejected' %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Reject">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="bi bi-people display-6 d-block mb-3 opacity-50"></i>
+      <p class="fw-semibold mb-2">No applicants yet</p>
+      <p class="small mb-0">
+        {% if status_filter %}
+          No applicants match the selected filter.
+          <a href="{% url 'jobs:job_applicants' pk=job.pk %}">View all applicants</a>
+        {% else %}
+          Share this job listing to attract applicants.
+        {% endif %}
+      </p>
+    </div>
+  {% endif %}
+{% endblock %}
