@@ -24,6 +24,18 @@ class JobType(models.TextChoices):
     FREELANCE = "freelance", "Freelance"
 
 
+class JobCategory(models.TextChoices):
+    TECHNOLOGY = "technology", "Technology"
+    DESIGN = "design", "Design"
+    MARKETING = "marketing", "Marketing"
+    FINANCE = "finance", "Finance"
+    HEALTHCARE = "healthcare", "Healthcare"
+    EDUCATION = "education", "Education"
+    ENGINEERING = "engineering", "Engineering"
+    SALES = "sales", "Sales"
+    OTHER = "other", "Other"
+
+
 class Currency(models.TextChoices):
     USD = "USD", "US Dollar"
     EUR = "EUR", "Euro"
@@ -43,6 +55,11 @@ class Job(models.Model):
         max_length=20,
         choices=JobType.choices,
         default=JobType.FULL_TIME,
+    )
+    category = models.CharField(
+        max_length=20,
+        choices=JobCategory.choices,
+        default=JobCategory.OTHER,
     )
     salary_min = models.IntegerField(null=True, blank=True)
     salary_max = models.IntegerField(null=True, blank=True)
