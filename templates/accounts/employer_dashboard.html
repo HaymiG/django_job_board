@@ -8,7 +8,14 @@
       <h1 class="section-title h4 mb-1">Employer dashboard</h1>
       <p class="text-muted small mb-0">Manage your jobs and applications</p>
     </div>
-    <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary btn-sm">Back to profile</a>
+    <div class="d-flex gap-2">
+      <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-person me-1"></i> Profile
+      </a>
+      <a href="{% url 'jobs:create_job' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Post a job
+      </a>
+    </div>
   </div>
 
   <!-- Company Info -->
@@ -77,27 +84,36 @@
           <article class="job-card">
             <div class="d-flex justify-content-between align-items-start">
               <div class="flex-grow-1">
-                <h4 class="job-title h6 mb-1">{{ job.title }}</h4>
+                <h4 class="job-title h6 mb-1">
+                  <a href="{% url 'jobs:job_detail' pk=job.pk %}" class="text-decoration-none">
+                    {{ job.title }}
+                  </a>
+                </h4>
                 <p class="job-meta mb-2">
                   <span><i class="bi bi-geo-alt me-1"></i>{{ job.location|default:"Remote" }}</span>
                   <span class="mx-2">·</span>
-                  <span><i class="bi bi-briefcase me-1"></i>{{ job.job_type|default:"Full-time" }}</span>
+                  <span><i class="bi bi-briefcase me-1"></i>{{ job.get_job_type_display }}</span>
+                  <span class="mx-2">·</span>
+                  <span class="badge bg-success bg-opacity-10 text-success">{{ job.get_category_display }}</span>
                   {% if job.is_active %}
                     <span class="mx-2">·</span>
                     <span class="badge badge-success">Active</span>
                   {% endif %}
                 </p>
-                <p class="small text-muted mb-0">
-                  {{ job.applications.count }} application{{ job.applications.count|pluralize }}
-                </p>
+                <div class="d-flex gap-2 align-items-center">
+                  <a href="{% url 'jobs:job_applicants' pk=job.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-people me-1"></i>
+                    {{ job.applications.count }} applicant{{ job.applications.count|pluralize }}
+                  </a>
+                </div>
               </div>
               <div class="ms-2 text-end">
                 <small class="d-block text-muted mb-2">Posted {{ job.created_at|date:"M j, Y" }}</small>
                 <div class="btn-group btn-group-sm" role="group">
-                  <a href="#" class="btn btn-outline-secondary" title="Edit">
+                  <a href="{% url 'jobs:edit_job' pk=job.pk %}" class="btn btn-outline-secondary" title="Edit">
                     <i class="bi bi-pencil"></i>
                   </a>
-                  <a href="#" class="btn btn-outline-danger" title="Delete">
+                  <a href="{% url 'jobs:delete_job' pk=job.pk %}" class="btn btn-outline-danger" title="Delete">
                     <i class="bi bi-trash"></i>
                   </a>
                 </div>
@@ -112,7 +128,9 @@
       <i class="bi bi-briefcase display-6 d-block mb-3 opacity-50"></i>
       <p class="fw-semibold mb-2">No jobs posted yet</p>
       <p class="small mb-3">Start by posting your first job opening.</p>
-      <a href="#" class="btn btn-primary btn-sm">Post a job</a>
+      <a href="{% url 'jobs:create_job' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Post a job
+      </a>
     </div>
   {% endif %}
 {% endblock %}

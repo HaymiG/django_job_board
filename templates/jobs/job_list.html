@@ -10,17 +10,36 @@
     <div class="card mb-4">
       <div class="card-body">
         <form method="get" class="row g-3">
+          <!-- Keyword search -->
           <div class="col-md-6">
+            <label for="id_search" class="form-label small text-muted">Search</label>
             <input
               type="text"
+              id="id_search"
               name="q"
               class="form-control"
-              placeholder="Search by job title or location..."
+              placeholder="Search by title, description or company..."
               value="{{ query }}"
             />
           </div>
+
+          <!-- Location filter -->
+          <div class="col-md-6">
+            <label for="id_location" class="form-label small text-muted">Location</label>
+            <input
+              type="text"
+              id="id_location"
+              name="location"
+              class="form-control"
+              placeholder="e.g. Remote, New York, London..."
+              value="{{ location }}"
+            />
+          </div>
+
+          <!-- Job type filter -->
           <div class="col-md-4">
-            <select name="job_type" class="form-select">
+            <label for="id_job_type" class="form-label small text-muted">Job Type</label>
+            <select id="id_job_type" name="job_type" class="form-select">
               <option value="">All job types</option>
               {% for value, label in job_type_choices %}
                 <option value="{{ value }}" {% if job_type == value %}selected{% endif %}>
@@ -29,14 +48,66 @@
               {% endfor %}
             </select>
           </div>
-          <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">
+
+          <!-- Category filter -->
+          <div class="col-md-4">
+            <label for="id_category" class="form-label small text-muted">Category</label>
+            <select id="id_category" name="category" class="form-select">
+              <option value="">All categories</option>
+              {% for value, label in category_choices %}
+                <option value="{{ value }}" {% if category == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Submit + Clear -->
+          <div class="col-md-4 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">
               <i class="bi bi-search me-1"></i> Search
             </button>
+            {% if query or job_type or category or location %}
+              <a href="{% url 'jobs:job_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg"></i> Clear
+              </a>
+            {% endif %}
           </div>
         </form>
       </div>
     </div>
+
+    <!-- Active filter badges -->
+    {% if query or job_type or category or location %}
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <span class="text-muted small me-1 align-self-center">Active filters:</span>
+        {% if query %}
+          <span class="badge bg-primary">
+            <i class="bi bi-search me-1"></i>"{{ query }}"
+          </span>
+        {% endif %}
+        {% if job_type %}
+          <span class="badge bg-info text-dark">
+            <i class="bi bi-briefcase me-1"></i>{{ job_type }}
+          </span>
+        {% endif %}
+        {% if category %}
+          <span class="badge bg-success">
+            <i class="bi bi-tag me-1"></i>{{ category }}
+          </span>
+        {% endif %}
+        {% if location %}
+          <span class="badge bg-warning text-dark">
+            <i class="bi bi-geo-alt me-1"></i>{{ location }}
+          </span>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- Results count -->
+    <p class="text-muted small mb-3">
+      {{ jobs.paginator.count }} job{{ jobs.paginator.count|pluralize }} found
+    </p>
 
     <!-- Job Listings -->
     {% if jobs %}
@@ -59,7 +130,10 @@
                       <i class="bi bi-building me-1"></i> {{ job.company.name }}
                     </p>
                   </div>
-                  <span class="badge bg-light text-dark">{{ job.get_job_type_display }}</span>
+                  <div class="d-flex gap-1">
+                    <span class="badge bg-light text-dark">{{ job.get_job_type_display }}</span>
+                    <span class="badge bg-success bg-opacity-10 text-success">{{ job.get_category_display }}</span>
+                  </div>
                 </div>
 
                 <p class="card-text text-muted small mb-3">
@@ -95,13 +169,21 @@
 
       <!-- Pagination -->
       {% if jobs.has_other_pages %}
+        {% comment %}
+          Build a reusable query-string fragment so page links preserve
+          all active filters (keyword, job_type, category, location).
+        {% endcomment %}
+        {% with qs_filters="" %}
+          {% comment %} We build this inline using template tags {% endcomment %}
+        {% endwith %}
+
         <nav class="mt-5" aria-label="Page navigation">
           <ul class="pagination justify-content-center">
             {% if jobs.has_previous %}
               <li class="page-item">
                 <a
                   class="page-link"
-                  href="?page=1{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}"
+                  href="?page=1{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if location %}&location={{ location }}{% endif %}"
                 >
                   <i class="bi bi-chevron-double-left"></i> First
                 </a>
@@ -109,7 +191,7 @@
               <li class="page-item">
                 <a
                   class="page-link"
-                  href="?page={{ jobs.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}"
+                  href="?page={{ jobs.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if location %}&location={{ location }}{% endif %}"
                 >
                   <i class="bi bi-chevron-left"></i> Previous
                 </a>
@@ -126,7 +208,7 @@
               <li class="page-item">
                 <a
                   class="page-link"
-                  href="?page={{ jobs.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}"
+                  href="?page={{ jobs.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if location %}&location={{ location }}{% endif %}"
                 >
                   Next <i class="bi bi-chevron-right"></i>
                 </a>
@@ -134,7 +216,7 @@
               <li class="page-item">
                 <a
                   class="page-link"
-                  href="?page={{ jobs.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}"
+                  href="?page={{ jobs.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if job_type %}&job_type={{ job_type }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if location %}&location={{ location }}{% endif %}"
                 >
                   Last <i class="bi bi-chevron-double-right"></i>
                 </a>

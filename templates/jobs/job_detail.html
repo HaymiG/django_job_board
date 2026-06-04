@@ -16,7 +16,10 @@
                 <a href="#" class="text-decoration-none">{{ job.company.name }}</a>
               </p>
             </div>
-            <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
+            <div class="d-flex gap-2">
+              <span class="badge bg-primary">{{ job.get_job_type_display }}</span>
+              <span class="badge bg-success bg-opacity-10 text-success">{{ job.get_category_display }}</span>
+            </div>
           </div>
 
           <div class="row g-3 text-muted small mb-4">
@@ -52,6 +55,10 @@
             {% if is_job_owner %}
               <a href="{% url 'jobs:edit_job' pk=job.pk %}" class="btn btn-outline-primary">
                 <i class="bi bi-pencil me-1"></i> Edit job
+              </a>
+              <a href="{% url 'jobs:job_applicants' pk=job.pk %}" class="btn btn-outline-info">
+                <i class="bi bi-people me-1"></i> View applicants
+                <span class="badge bg-primary ms-1">{{ job.applications.count }}</span>
               </a>
               <a
                 href="{% url 'jobs:delete_job' pk=job.pk %}"
@@ -112,25 +119,96 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
-      <!-- Application Info -->
+      <!-- Application Section -->
       {% if user.is_authenticated and not is_job_owner %}
         <div class="card sticky-lg-top mb-4" id="apply-section">
           <div class="card-body">
             {% if has_applied %}
-              <div class="alert alert-success mb-0">
-                <i class="bi bi-check-circle me-2"></i>
-                <strong>You've applied!</strong><br />
-                You applied on {{ job.applications.first.created_at|date:"M d, Y" }}
+              <div class="text-center mb-3">
+                <div class="apply-success-icon mb-2">
+                  <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <h5 class="card-title mb-1">Application submitted</h5>
+                <p class="small text-muted mb-2">
+                  Applied on {{ user_application.created_at|date:"M d, Y" }}
+                </p>
+                <span class="badge badge-{{ user_application.get_status_display|lower }} rounded-pill px-3 py-2">
+                  {{ user_application.get_status_display }}
+                </span>
+              </div>
+              {% if user_application.resume %}
+                <hr>
+                <p class="small mb-1 text-muted">
+                  <i class="bi bi-file-earmark-pdf me-1"></i> Resume attached
+                </p>
+              {% endif %}
+            {% elif application_form %}
+              <h5 class="card-title mb-1">Apply for this job</h5>
+              <p class="small text-muted mb-3">
+                Submit your cover letter and resume to apply.
+              </p>
+              <form method="post" action="{% url 'jobs:apply_to_job' pk=job.pk %}" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <!-- Cover letter -->
+                <div class="mb-3">
+                  <label for="{{ application_form.cover_letter.id_for_label }}" class="form-label small fw-semibold">
+                    {{ application_form.cover_letter.label }}
+                  </label>
+                  {{ application_form.cover_letter }}
+                  {% if application_form.cover_letter.errors %}
+                    <div class="invalid-feedback d-block">
+                      {% for error in application_form.cover_letter.errors %}{{ error }}{% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <!-- Resume upload -->
+                <div class="mb-3">
+                  <label for="{{ application_form.resume.id_for_label }}" class="form-label small fw-semibold">
+                    {{ application_form.resume.label }}
+                  </label>
+                  {{ application_form.resume }}
+                  {% if application_form.resume.help_text %}
+                    <div class="form-text">{{ application_form.resume.help_text }}</div>
+                  {% endif %}
+                  {% if application_form.resume.errors %}
+                    <div class="invalid-feedback d-block">
+                      {% for error in application_form.resume.errors %}{{ error }}{% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                  <i class="bi bi-send me-1"></i> Submit application
+                </button>
+              </form>
+
+              <div class="text-center mt-3">
+                <a href="{% url 'jobs:apply_to_job' pk=job.pk %}" class="small text-muted text-decoration-none">
+                  <i class="bi bi-arrows-fullscreen me-1"></i> Open full page form
+                </a>
               </div>
             {% else %}
-              <h5 class="card-title mb-3">Apply for this job</h5>
-              <p class="small text-muted mb-3">
-                Submit your application with your cover letter and resume.
-              </p>
-              <a href="{% url 'accounts:profile' %}" class="btn btn-primary w-100">
-                <i class="bi bi-upload me-1"></i> Submit application
-              </a>
+              <h5 class="card-title mb-3">Interested?</h5>
+              <p class="small text-muted mb-3">Only job seekers can apply for positions.</p>
             {% endif %}
+          </div>
+        </div>
+      {% elif not user.is_authenticated %}
+        <div class="card sticky-lg-top mb-4" id="apply-section">
+          <div class="card-body text-center">
+            <div class="mb-3">
+              <i class="bi bi-person-circle display-6 text-muted"></i>
+            </div>
+            <h5 class="card-title mb-2">Sign in to apply</h5>
+            <p class="small text-muted mb-3">Create an account or log in to submit your application.</p>
+            <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary w-100 mb-2">
+              <i class="bi bi-box-arrow-in-right me-1"></i> Sign in
+            </a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-outline-secondary w-100">
+              Register
+            </a>
           </div>
         </div>
       {% endif %}

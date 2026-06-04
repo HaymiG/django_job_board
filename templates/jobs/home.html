@@ -115,7 +115,11 @@
           <div class="col-12">
             <article class="job-card d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
               <div>
-                <h3 class="job-title h6 mb-1">{{ job.title }}</h3>
+                <h3 class="job-title h6 mb-1">
+                  <a href="{% url 'jobs:job_detail' pk=job.pk %}" class="text-decoration-none">
+                    {{ job.title }}
+                  </a>
+                </h3>
                 <p class="job-meta mb-0">
                   <i class="bi bi-building me-1"></i>{{ job.company.name }}
                   {% if job.location %}
@@ -125,7 +129,8 @@
                 </p>
               </div>
               <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                <span class="badge badge-active rounded-pill px-3 py-2">Active</span>
+                <span class="badge bg-light text-dark">{{ job.get_job_type_display }}</span>
+                <span class="badge bg-success bg-opacity-10 text-success">{{ job.get_category_display }}</span>
                 <span class="text-muted small">{{ job.created_at|date:"M j, Y" }}</span>
               </div>
             </article>
