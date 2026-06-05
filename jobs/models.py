@@ -37,13 +37,10 @@ class JobCategory(models.TextChoices):
 
 
 class Currency(models.TextChoices):
+    BIRR = "ETB", "Ethiopian Birr"
     USD = "USD", "US Dollar"
     EUR = "EUR", "Euro"
-    GBP = "GBP", "British Pound"
-    CAD = "CAD", "Canadian Dollar"
-    AUD = "AUD", "Australian Dollar"
-    JPY = "JPY", "Japanese Yen"
-    INR = "INR", "Indian Rupee"
+    
 
 
 class Job(models.Model):

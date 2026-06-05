@@ -23,6 +23,7 @@ def register(request):
             return redirect("accounts:profile")
     else:
         form = RegistrationForm()
+        
 
     return render(request, "accounts/register.html", {"form": form})
 
