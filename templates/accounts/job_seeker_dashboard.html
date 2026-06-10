@@ -12,6 +12,12 @@
       <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-person me-1"></i> Profile
       </a>
+      <a href="{% url 'jobs:saved_jobs' %}" class="btn btn-outline-warning btn-sm">
+        <i class="bi bi-bookmark-heart me-1"></i> Saved Jobs
+        {% if saved_jobs_count %}
+          <span class="badge bg-warning text-dark ms-1">{{ saved_jobs_count }}</span>
+        {% endif %}
+      </a>
       <a href="{% url 'jobs:job_list' %}" class="btn btn-primary btn-sm">
         <i class="bi bi-search me-1"></i> Browse jobs
       </a>
@@ -43,6 +49,14 @@
         <div class="stat-value">{{ stats.accepted }}</div>
         <div class="stat-label">Accepted</div>
       </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <a href="{% url 'jobs:saved_jobs' %}" class="text-decoration-none">
+        <div class="stat-card" style="border-color: var(--bs-warning); cursor: pointer;">
+          <div class="stat-value">{{ saved_jobs_count }}</div>
+          <div class="stat-label"><i class="bi bi-bookmark-heart me-1"></i>Saved jobs</div>
+        </div>
+      </a>
     </div>
   </div>
 

@@ -76,6 +76,18 @@
                   </a>
                 {% endif %}
               </li>
+              {% if user.role == 'job_seeker' %}
+                <li class="nav-item">
+                  <a class="nav-link position-relative" href="{% url 'jobs:saved_jobs' %}">
+                    <i class="bi bi-bookmark-heart me-1"></i> Saved
+                    {% if saved_jobs_count %}
+                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size:.65rem;">
+                        {{ saved_jobs_count }}
+                      </span>
+                    {% endif %}
+                  </a>
+                </li>
+              {% endif %}
             {% endif %}
           </ul>
           <ul class="navbar-nav align-items-lg-center gap-lg-2">

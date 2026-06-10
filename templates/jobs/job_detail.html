@@ -51,7 +51,7 @@
           </div>
 
           <!-- Action Buttons -->
-          <div class="d-flex gap-2 flex-wrap">
+          <div class="d-flex gap-2 flex-wrap align-items-center">
             {% if is_job_owner %}
               <a href="{% url 'jobs:edit_job' pk=job.pk %}" class="btn btn-outline-primary">
                 <i class="bi bi-pencil me-1"></i> Edit job
@@ -77,14 +77,84 @@
                   <i class="bi bi-cursor-fill me-1"></i> Apply for job
                 </a>
               {% endif %}
+
+              {# ── Save / Unsave toggle (AJAX) ── #}
+              {% if user.role == 'job_seeker' %}
+                <form
+                  id="save-job-form"
+                  method="post"
+                  action="{% url 'jobs:toggle_save_job' pk=job.pk %}"
+                >
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.path }}">
+                  <button
+                    type="submit"
+                    id="save-job-btn"
+                    class="btn {% if is_saved %}btn-warning{% else %}btn-outline-secondary{% endif %}"
+                    title="{% if is_saved %}Remove from saved jobs{% else %}Save this job{% endif %}"
+                  >
+                    <i class="bi {% if is_saved %}bi-bookmark-heart-fill{% else %}bi-bookmark-heart{% endif %} me-1"></i>
+                    <span id="save-job-label">{% if is_saved %}Saved{% else %}Save{% endif %}</span>
+                  </button>
+                </form>
+              {% endif %}
             {% else %}
               <a href="{% url 'accounts:login' %}" class="btn btn-primary">
                 <i class="bi bi-box-arrow-in-right me-1"></i> Sign in to apply
+              </a>
+              <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-outline-secondary">
+                <i class="bi bi-bookmark-heart me-1"></i> Save job
               </a>
             {% endif %}
           </div>
         </div>
       </div>
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+  // AJAX save toggle — updates the button state without a full page reload.
+  // We detect AJAX by sending the X-Requested-With header and the view
+  // returns JSON {"saved": true/false} instead of a redirect.
+  (function () {
+    const form = document.getElementById("save-job-form");
+    if (!form) return;
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const btn   = document.getElementById("save-job-btn");
+      const label = document.getElementById("save-job-label");
+      const icon  = btn.querySelector("i");
+
+      try {
+        const resp = await fetch(form.action, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value,
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        });
+        const data = await resp.json();
+
+        if (data.saved) {
+          btn.className   = "btn btn-warning";
+          icon.className  = "bi bi-bookmark-heart-fill me-1";
+          label.textContent = "Saved";
+          btn.title       = "Remove from saved jobs";
+        } else {
+          btn.className   = "btn btn-outline-secondary";
+          icon.className  = "bi bi-bookmark-heart me-1";
+          label.textContent = "Save";
+          btn.title       = "Save this job";
+        }
+      } catch {
+        // Network error — fall back to regular form submit
+        form.submit();
+      }
+    });
+  })();
+</script>
+{% endblock %}
 
       <!-- Job Description -->
       <div class="card mb-4">
