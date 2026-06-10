@@ -511,12 +511,12 @@ body {
   color: var(--jb-primary);
 }
 
-.role-option input:checked + .role-option-body {
+.role-option input:checked+.role-option-body {
   border-color: var(--jb-primary);
   background: var(--jb-icon-employer-bg);
 }
 
-.role-option input:focus-visible + .role-option-body {
+.role-option input:focus-visible+.role-option-body {
   outline: 2px solid var(--jb-primary);
   outline-offset: 2px;
 }
@@ -703,4 +703,15 @@ body {
     justify-content: flex-start;
     margin-top: 0.5rem;
   }
+}
+
+/* Footer hover effects */
+.footer-jb a.hover-primary {
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-block;
+}
+
+.footer-jb a.hover-primary:hover {
+  color: var(--jb-primary) !important;
+  transform: translateY(-2px);
 }
