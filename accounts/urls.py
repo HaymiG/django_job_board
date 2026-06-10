@@ -10,5 +10,6 @@ urlpatterns = [
     path("logout/", views.UserLogoutView.as_view(), name="logout"),
     path("profile/", views.profile, name="profile"),
     path("dashboard/employer/", views.employer_dashboard, name="employer_dashboard"),
+    path("dashboard/employer/analytics/", views.employer_analytics, name="employer_analytics"),
     path("dashboard/seeker/", views.job_seeker_dashboard, name="job_seeker_dashboard"),
 ]

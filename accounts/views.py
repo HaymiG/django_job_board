@@ -4,8 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum, Avg
 
+from jobs.emails import send_registration_confirmation
 from jobs.models import Application, Job
 
 from .decorators import employer_required, job_seeker_required
@@ -19,6 +20,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            send_registration_confirmation(user)  # send welcome email
             messages.success(request, "Welcome! Your account has been created.")
             return redirect("accounts:profile")
     else:
@@ -94,7 +96,10 @@ def employer_dashboard(request):
             job__company=company,
             status__in=['submitted', 'reviewing']
         ).count()
-    
+        # Sum all job view counts
+        from django.db.models import Sum as _Sum
+        total_views = jobs.aggregate(tv=_Sum("views"))["tv"] or 0
+
     context = {
         "company": company,
         "jobs": jobs,
@@ -102,6 +107,7 @@ def employer_dashboard(request):
             "posted_jobs": len(jobs),
             "total_applications": total_applications,
             "pending_applications": pending_applications,
+            "total_views": total_views,
         }
     }
     return render(request, "accounts/employer_dashboard.html", context)
@@ -131,3 +137,106 @@ def job_seeker_dashboard(request):
         "stats": stats,
     }
     return render(request, "accounts/job_seeker_dashboard.html", context)
+
+
+@employer_required
+def employer_analytics(request):
+    """
+    Analytics dashboard for employers.
+
+    Django aggregations used here:
+    ─────────────────────────────
+    annotate() adds a computed column to EVERY ROW of the QuerySet.
+    Django translates it into a SQL expression added to the SELECT clause.
+
+      Job.objects
+        .annotate(
+            application_count=Count("applications"),  # per-job count
+            total_views=Sum("views"),                 # same as .views but via annotation
+        )
+
+    This is equivalent to:
+      SELECT jobs_job.*, COUNT(jobs_application.id) AS application_count
+      FROM jobs_job
+      LEFT JOIN jobs_application ON jobs_application.job_id = jobs_job.id
+      GROUP BY jobs_job.id
+
+    aggregate() (used at the end) collapses the WHOLE QuerySet to one dict:
+      Application.objects.aggregate(avg_per_job=Avg("job__applications__count"))
+    """
+    company = getattr(request.user, "company", None)
+    if not company:
+        messages.warning(request, "You need a company profile to view analytics.")
+        return redirect("accounts:employer_dashboard")
+
+    # ── Per-job stats using annotate() ────────────────────────────────────────
+    # annotate() adds application_count as a computed column on each Job row.
+    # Count("applications") uses the reverse FK name (related_name on Application.job)
+    jobs_with_stats = (
+        company.jobs.annotate(
+            application_count=Count("applications"),
+        )
+        .order_by("-created_at")
+    )
+
+    # ── Application status breakdown using aggregate() ─────────────────────────
+    # aggregate() returns a single dict with summary values across the whole QS
+    app_qs = Application.objects.filter(job__company=company)
+    status_counts = app_qs.aggregate(
+        submitted=Count("id", filter=Q(status="submitted")),
+        reviewing=Count("id", filter=Q(status="reviewing")),
+        accepted=Count("id", filter=Q(status="accepted")),
+        rejected=Count("id", filter=Q(status="rejected")),
+    )
+
+    # ── Top jobs by views ──────────────────────────────────────────────────────
+    top_by_views = jobs_with_stats.order_by("-views")[:5]
+    top_by_applications = jobs_with_stats.order_by("-application_count")[:5]
+
+    # ── Total views across all company jobs ────────────────────────────────────
+    totals = jobs_with_stats.aggregate(
+        total_views=Sum("views"),
+        total_applications=Sum("application_count"),
+    )
+
+    # ── Build Chart.js-ready data (lists of labels + values) ──────────────────
+    # We serialize in Python so the template only needs {{ chart_data|safe }}
+    import json
+
+    # Bar chart: applications per job (top 8 for readability)
+    top8 = jobs_with_stats.order_by("-application_count")[:8]
+    applications_chart = json.dumps({
+        "labels": [j.title for j in top8],
+        "data":   [j.application_count for j in top8],
+    })
+
+    # Doughnut chart: application status breakdown
+    status_chart = json.dumps({
+        "labels": ["Submitted", "Reviewing", "Accepted", "Rejected"],
+        "data": [
+            status_counts["submitted"],
+            status_counts["reviewing"],
+            status_counts["accepted"],
+            status_counts["rejected"],
+        ],
+    })
+
+    # Line chart: views per job (top 8 most-viewed)
+    top8_views = jobs_with_stats.order_by("-views")[:8]
+    views_chart = json.dumps({
+        "labels": [j.title for j in top8_views],
+        "data":   [j.views for j in top8_views],
+    })
+
+    context = {
+        "company": company,
+        "jobs_with_stats": jobs_with_stats,
+        "status_counts": status_counts,
+        "top_by_views": top_by_views,
+        "top_by_applications": top_by_applications,
+        "totals": totals,
+        "applications_chart": applications_chart,
+        "status_chart": status_chart,
+        "views_chart": views_chart,
+    }
+    return render(request, "accounts/employer_analytics.html", context)
