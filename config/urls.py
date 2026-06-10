@@ -23,6 +23,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("accounts/", include("accounts.urls")),
     path("", include("jobs.urls")),
+    # REST API — all endpoints under /api/
+    path("api/", include("jobs.api.urls")),
+    # Browsable API login/logout (only active when DEBUG=True via DRF settings)
+    path("api/auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]
 
 # Serve media files in development
