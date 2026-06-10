@@ -58,6 +58,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third-party
+    'rest_framework',           # Django REST Framework
+    'rest_framework.authtoken', # Token authentication (creates authtoken_token table)
+    # Local apps
     'accounts',
     'jobs',
 ]
@@ -88,6 +92,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Injects `saved_jobs_count` into every template (navbar badge)
+                'jobs.context_processors.saved_jobs_count',
             ],
         },
     },
@@ -186,3 +192,63 @@ MESSAGE_TAGS = {
     message_constants.WARNING: "warning",
     message_constants.ERROR: "danger",
 }
+
+# ── Django REST Framework ───────────────────────────────────────────────────
+#
+# REST architecture:
+#   A client (mobile app, frontend SPA, curl) sends an HTTP request.
+#   DRF routes it through a ViewSet, which calls a Serializer to turn the
+#   Django ORM object into JSON (or XML). Authentication is checked first.
+#
+# Authentication:
+#   TokenAuthentication  → client sends  Authorization: Token <token>  header.
+#   SessionAuthentication → used by the Browsable API in the browser (uses cookies).
+#
+# Permissions:
+#   IsAuthenticatedOrReadOnly → read (GET) is public, write (POST/PUT/DELETE)
+#   requires a valid token.
+REST_FRAMEWORK = {
+    # Authentication classes tried in order
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",  # browsable API
+    ],
+    # Default permission policy
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ],
+    # Pagination — returns 20 results per page with next/previous links
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    # Filtering
+    "DEFAULT_FILTER_BACKENDS": [
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    # Renderers — JSON + the interactive Browsable API HTML interface
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+}
+
+# ── Email Configuration ───────────────────────────────────────────────────────
+# How Django email works:
+#   Development  → console backend prints emails to the terminal (no SMTP needed)
+#   Production   → smtp backend delivers via EMAIL_HOST / EMAIL_PORT / credentials
+#
+# Switch by setting EMAIL_BACKEND in .env:
+#   EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+#
+# send_mail() / EmailMultiAlternatives both use this backend automatically.
+
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",  # dev default
+)
+EMAIL_HOST          = env("EMAIL_HOST",          "smtp.gmail.com")
+EMAIL_PORT          = int(env("EMAIL_PORT",      "587"))
+EMAIL_USE_TLS       = (env("EMAIL_USE_TLS",      "1") == "1")
+EMAIL_HOST_USER     = env("EMAIL_HOST_USER",     "")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL  = env("DEFAULT_FROM_EMAIL",  "JobBoard <noreply@jobboard.local>")
