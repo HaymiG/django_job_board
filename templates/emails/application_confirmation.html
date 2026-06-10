@@ -1,0 +1,100 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}Application received — {{ application.job.title }}{% endblock %}
+{% block header_subtitle %}We got it! Your application is on its way. 📬{% endblock %}
+
+{% block body %}
+  <!-- Greeting -->
+  <p style="margin:0 0 20px;font-size:22px;font-weight:700;color:#1e293b;">
+    Application submitted ✅
+  </p>
+  <p style="margin:0 0 24px;font-size:15px;color:#475569;line-height:1.7;">
+    Hi {{ application.applicant.first_name|default:application.applicant.username }},
+    your application for <strong>{{ application.job.title }}</strong> at
+    <strong>{{ application.job.company.name }}</strong> has been received.
+    The employer will review it and reach out if you're a good fit.
+  </p>
+
+  <!-- Application summary card -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="margin:0 0 28px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+    <tr>
+      <td style="background-color:#4f46e5;padding:16px 24px;">
+        <p style="margin:0;font-size:16px;font-weight:700;color:#ffffff;">
+          {{ application.job.title }}
+        </p>
+        <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,.8);">
+          {{ application.job.company.name }}
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:20px 24px;background-color:#f8fafc;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:6px 0;font-size:13px;color:#64748b;width:130px;">📍 Location</td>
+            <td style="padding:6px 0;font-size:13px;color:#1e293b;font-weight:600;">
+              {{ application.job.location }}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;font-size:13px;color:#64748b;">💼 Job type</td>
+            <td style="padding:6px 0;font-size:13px;color:#1e293b;font-weight:600;">
+              {{ application.job.get_job_type_display }}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;font-size:13px;color:#64748b;">📅 Applied on</td>
+            <td style="padding:6px 0;font-size:13px;color:#1e293b;font-weight:600;">
+              {{ application.created_at|date:"F j, Y" }}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;font-size:13px;color:#64748b;">🔄 Status</td>
+            <td style="padding:6px 0;">
+              <span style="display:inline-block;padding:2px 10px;background-color:#e0e7ff;
+                           color:#4f46e5;font-size:12px;font-weight:700;border-radius:99px;">
+                {{ application.get_status_display }}
+              </span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- What happens next -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="margin:0 0 28px;background-color:#fefce8;border-left:4px solid #eab308;
+                border-radius:0 8px 8px 0;padding:16px 20px;">
+    <tr>
+      <td>
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#92400e;">
+          What happens next?
+        </p>
+        <p style="margin:0;font-size:13px;color:#78350f;line-height:1.6;">
+          The employer will review your application. You can check your status
+          anytime from your dashboard. We'll keep you posted.
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- CTA -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+    <tr>
+      <td align="center">
+        <a href="http://localhost:8000/dashboard/seeker/"
+           style="display:inline-block;padding:13px 32px;background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                  color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;
+                  border-radius:8px;">
+          View My Applications →
+        </a>
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin:0;font-size:13px;color:#94a3b8;text-align:center;">
+    Good luck! 🤞
+  </p>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "emails/base_email.html" %}
+
+{% block title %}New application — {{ application.job.title }}{% endblock %}
+{% block header_subtitle %}Someone just applied to your job posting! 🙌{% endblock %}
+
+{% block body %}
+  <!-- Greeting -->
+  <p style="margin:0 0 20px;font-size:22px;font-weight:700;color:#1e293b;">
+    New application received 🔔
+  </p>
+  <p style="margin:0 0 24px;font-size:15px;color:#475569;line-height:1.7;">
+    Hi {{ application.job.company.owner.first_name|default:application.job.company.owner.username }},
+    <strong>{{ application.applicant.get_full_name|default:application.applicant.username }}</strong>
+    just applied for your <strong>{{ application.job.title }}</strong> position.
+    Log in to review their cover letter and resume.
+  </p>
+
+  <!-- Applicant details -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="margin:0 0 28px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+    <tr>
+      <td style="background:linear-gradient(135deg,#059669,#10b981);padding:16px 24px;">
+        <p style="margin:0;font-size:16px;font-weight:700;color:#ffffff;">
+          Applicant Details
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:20px 24px;background-color:#f0fdf4;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding:6px 0;font-size:13px;color:#64748b;width:130px;">👤 Name</td>
+            <td style="padding:6px 0;font-size:13px;color:#1e293b;font-weight:600;">
+              {{ application.applicant.get_full_name|default:application.applicant.username }}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;font-size:13px;color:#64748b;">📧 Email</td>
+            <td style="padding:6px 0;font-size:13px;color:#1e293b;font-weight:600;">
+              {{ application.applicant.email }}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;font-size:13px;color:#64748b;">💼 Job applied</td>
+            <td style="padding:6px 0;font-size:13px;color:#1e293b;font-weight:600;">
+              {{ application.job.title }}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 0;font-size:13px;color:#64748b;">📅 Applied on</td>
+            <td style="padding:6px 0;font-size:13px;color:#1e293b;font-weight:600;">
+              {{ application.created_at|date:"F j, Y · g:i A" }}
+            </td>
+          </tr>
+          {% if application.cover_letter %}
+            <tr>
+              <td colspan="2" style="padding:12px 0 0;">
+                <p style="margin:0 0 6px;font-size:13px;color:#64748b;font-weight:600;">
+                  📝 Cover letter snippet
+                </p>
+                <p style="margin:0;font-size:13px;color:#475569;
+                           background-color:#ffffff;padding:12px 16px;
+                           border-radius:6px;border:1px solid #e2e8f0;
+                           line-height:1.6;font-style:italic;">
+                  "{{ application.cover_letter|truncatewords:40 }}"
+                </p>
+              </td>
+            </tr>
+          {% endif %}
+          {% if application.resume %}
+            <tr>
+              <td style="padding:10px 0 0;font-size:13px;color:#64748b;">📎 Resume</td>
+              <td style="padding:10px 0 0;font-size:13px;color:#059669;font-weight:600;">
+                Attached — view in dashboard
+              </td>
+            </tr>
+          {% endif %}
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- CTA -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+    <tr>
+      <td align="center">
+        <a href="http://localhost:8000/job/{{ application.job.pk }}/applicants/"
+           style="display:inline-block;padding:13px 32px;
+                  background:linear-gradient(135deg,#059669,#10b981);
+                  color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;
+                  border-radius:8px;">
+          Review Application →
+        </a>
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin:0;font-size:13px;color:#94a3b8;text-align:center;">
+    You'll receive one of these for every new application. Manage all candidates
+    from your employer dashboard.
+  </p>
+{% endblock %}
