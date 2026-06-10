@@ -66,6 +66,16 @@ class Job(models.Model):
         default=Currency.USD,
     )
     is_active = models.BooleanField(default=True)
+    # ManyToManyField: many users can save many jobs.
+    # blank=True → a job doesn't *need* to be saved by anyone.
+    # The reverse accessor request.user.saved_jobs gives all jobs a user bookmarked.
+    saved_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name="saved_jobs",
+        blank=True,
+    )
+    # View counter — incremented atomically with F() on each job_detail visit.
+    views = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
