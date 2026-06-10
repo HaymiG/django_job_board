@@ -1,11 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from django.http import HttpResponseForbidden
+from django.db.models import Q, F
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
 
 from accounts.decorators import employer_required, job_seeker_required
+from .emails import send_application_confirmation, send_employer_notification
 from .forms import ApplicationForm, JobForm
 from .models import Application, ApplicationStatus, Company, Job, JobCategory, JobType
 
@@ -70,8 +71,13 @@ def job_list(request):
 
 
 def job_detail(request, pk):
-    """Display full job posting details."""
+    """Display full job posting details and increment the view counter."""
     job = get_object_or_404(Job, pk=pk, is_active=True)
+
+    # Atomically increment the view counter — F() becomes SQL: views = views + 1
+    # This avoids race conditions if two visitors load the page simultaneously.
+    Job.objects.filter(pk=pk).update(views=F("views") + 1)
+    job.refresh_from_db(fields=["views"])
 
     # Check if user already applied
     has_applied = False
@@ -96,12 +102,19 @@ def job_detail(request, pk):
     ):
         application_form = ApplicationForm()
 
+    # Check if the current user has saved this job
+    is_saved = (
+        request.user.is_authenticated
+        and job.saved_by.filter(pk=request.user.pk).exists()
+    )
+
     context = {
         "job": job,
         "has_applied": has_applied,
         "user_application": user_application,
         "is_job_owner": is_job_owner,
         "application_form": application_form,
+        "is_saved": is_saved,
     }
     return render(request, "jobs/job_detail.html", context)
 
@@ -123,6 +136,9 @@ def apply_to_job(request, pk):
             application.job = job
             application.applicant = request.user
             application.save()
+            # Send confirmation to applicant and notification to employer
+            send_application_confirmation(application)
+            send_employer_notification(application)
             messages.success(
                 request,
                 f'Your application for "{job.title}" has been submitted!'
@@ -262,3 +278,60 @@ def delete_job(request, pk):
 
     context = {"job": job}
     return render(request, "jobs/job_confirm_delete.html", context)
+
+
+@login_required
+def toggle_save_job(request, pk):
+    """
+    Toggle saving / unsaving a job for the current user.
+
+    ManyToManyField API:
+      job.saved_by.add(user)    → INSERT into the join table
+      job.saved_by.remove(user) → DELETE from the join table
+      .filter(pk=…).exists()   → SELECT 1 — cheap existence check
+
+    The view handles two modes:
+      • AJAX (fetch): returns JSON {"saved": true/false} for instant UI updates
+      • Regular POST:  redirects back to the referring page
+    """
+    if request.method != "POST":
+        return HttpResponseForbidden("Method not allowed.")
+
+    job = get_object_or_404(Job, pk=pk)
+
+    if job.saved_by.filter(pk=request.user.pk).exists():
+        job.saved_by.remove(request.user)
+        saved = False
+        msg = f'"{job.title}" removed from saved jobs.'
+    else:
+        job.saved_by.add(request.user)
+        saved = True
+        msg = f'"{job.title}" saved! View in your dashboard.'
+
+    # AJAX request → JSON response (no page reload)
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"saved": saved})
+
+    # Standard form submit → redirect with flash message
+    messages.success(request, msg)
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or "/"
+    return redirect(next_url)
+
+
+@login_required
+def saved_jobs(request):
+    """
+    Display all active jobs bookmarked by the current user.
+
+    `request.user.saved_jobs` works because of the `related_name="saved_jobs"`
+    we set on the ManyToManyField — Django creates this reverse manager
+    automatically from the field definition on Job.
+    """
+    jobs = (
+        request.user.saved_jobs
+        .filter(is_active=True)
+        .select_related("company")
+        .order_by("-created_at")
+    )
+    context = {"saved_jobs": jobs}
+    return render(request, "jobs/saved_jobs.html", context)
