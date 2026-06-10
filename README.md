@@ -201,7 +201,7 @@ Authentication: `Authorization: Token <your-token>`
 POST /api/auth/token/
 Content-Type: application/x-www-form-urlencoded
 
-username=alice&password=secret
+username=alice & password=secret
 # Returns: {"token": "9944b09199c62bcf..."}
 ```
 
