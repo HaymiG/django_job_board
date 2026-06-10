@@ -38,8 +38,15 @@
               <div class="col-sm-6">
                 <p class="mb-0">
                   <i class="bi bi-cash-coin me-2"></i> <strong>Salary:</strong>
-                  ${{ job.salary_min|floatformat:0 }} - ${{ job.salary_max|floatformat:0 }}
-                  {{ job.salary_currency }}
+                  {% if job.salary_currency == "ETB" %}
+                    {{ job.salary_min|floatformat:0 }} - {{ job.salary_max|floatformat:0 }} ETB
+                  {% elif job.salary_currency == "USD" %}
+                    ${{ job.salary_min|floatformat:0 }} - ${{ job.salary_max|floatformat:0 }}
+                  {% elif job.salary_currency == "EUR" %}
+                    €{{ job.salary_min|floatformat:0 }} - €{{ job.salary_max|floatformat:0 }}
+                  {% else %}
+                    {{ job.salary_min|floatformat:0 }} - {{ job.salary_max|floatformat:0 }} {{ job.salary_currency }}
+                  {% endif %}
                 </p>
               </div>
             {% endif %}

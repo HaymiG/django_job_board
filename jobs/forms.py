@@ -95,6 +95,8 @@ class JobForm(forms.ModelForm):
         """Make salary_currency optional if no salary is entered."""
         super().__init__(*args, **kwargs)
         self.fields["salary_currency"].required = False
+        if not self.instance.pk:
+            self.fields["salary_currency"].initial = "ETB"
 
     def clean(self):
         """Validate that salary_min <= salary_max."""

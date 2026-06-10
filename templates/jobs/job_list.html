@@ -147,7 +147,15 @@
                   {% if job.salary_min and job.salary_max %}
                     <span>
                       <i class="bi bi-cash-coin me-1"></i>
-                      ${{ job.salary_min|floatformat:0 }} - ${{ job.salary_max|floatformat:0 }} {{ job.salary_currency }}
+                      {% if job.salary_currency == "ETB" %}
+                        {{ job.salary_min|floatformat:0 }} - {{ job.salary_max|floatformat:0 }} ETB
+                      {% elif job.salary_currency == "USD" %}
+                        ${{ job.salary_min|floatformat:0 }} - ${{ job.salary_max|floatformat:0 }}
+                      {% elif job.salary_currency == "EUR" %}
+                        €{{ job.salary_min|floatformat:0 }} - €{{ job.salary_max|floatformat:0 }}
+                      {% else %}
+                        {{ job.salary_min|floatformat:0 }} - {{ job.salary_max|floatformat:0 }} {{ job.salary_currency }}
+                      {% endif %}
                     </span>
                   {% endif %}
                   <span class="ms-auto text-muted" title="{{ job.created_at }}">

@@ -63,7 +63,7 @@ class Job(models.Model):
     salary_currency = models.CharField(
         max_length=3,
         choices=Currency.choices,
-        default=Currency.USD,
+        default=Currency.BIRR,
     )
     is_active = models.BooleanField(default=True)
     # ManyToManyField: many users can save many jobs.
