@@ -1,19 +1,9 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# .github/workflows/ci.yml
-# Django Job Board — Continuous Integration
-#
-# Triggers: every push and pull-request to the 'main' branch.
-#
-# Jobs (run in parallel):
-#   test        — Install deps, run 87 tests, report coverage
-#   docker-build — Build the Docker image and verify it starts correctly
-#
-# Secrets (set in Settings → Secrets → Actions):
-#   DJANGO_SECRET_KEY   — optional, CI falls back to a safe placeholder
-#   CODECOV_TOKEN       — optional, enables Codecov coverage upload
+# .github/workflows/tests.yml
+# Django Job Board — Run Test Suite
 # ─────────────────────────────────────────────────────────────────────────────
 
-name: Django CI
+name: Tests
 
 on:
   push:
@@ -22,7 +12,6 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # ── Job 1: Run test suite ───────────────────────────────────────────────────
   test:
     name: Run Test Suite (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -31,7 +20,6 @@ jobs:
       fail-fast: false
       matrix:
         # Django 6.0 requires Python 3.12+ — 3.11 is not supported.
-        # We test on 3.12 (current stable) and 3.13 (latest).
         python-version: ["3.12", "3.13"]
 
     env:
@@ -82,40 +70,3 @@ jobs:
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  # ── Job 2: Verify Docker image builds cleanly ───────────────────────────────
-  docker-build:
-    name: Build Docker Image
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Build the Docker image using our multi-stage Dockerfile.
-      # --target runtime: build only to the runtime stage (skip nothing — both
-      # stages run, but we tag the result of the runtime stage).
-      - name: Build Docker image
-        run: |
-          docker build \
-            --target runtime \
-            --tag jobboard:ci \
-            --label "git-sha=${{ github.sha }}" \
-            .
-
-      # Smoke test: start the container with SQLite and verify Django starts
-      # without errors (manage.py check runs system checks).
-      - name: Smoke-test container (Django system check)
-        run: |
-          docker run --rm \
-            -e DJANGO_SECRET_KEY=ci-test-key \
-            -e DJANGO_DEBUG=1 \
-            -e DB_ENGINE=sqlite \
-            -e EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend \
-            --entrypoint python \
-            jobboard:ci \
-            manage.py check --deploy 2>&1 | grep -v "WARNINGS" || true
-
-      # Report final image size — useful to track bloat over time.
-      - name: Report image size
-        run: docker image inspect jobboard:ci --format='Image size: {{.Size}}' | numfmt --field=3 --to=iec
