@@ -5,3 +5,5 @@ sqlparse==0.5.5
 psycopg[binary]
 python-dotenv
 coverage
+gunicorn
+whitenoise[brotli]

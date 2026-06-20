@@ -1,0 +1,90 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — Development
+#
+# Orchestrates three services:
+#   db      — PostgreSQL 16 database
+#   web     — Django + Gunicorn (your app)
+#   nginx   — Nginx reverse proxy (terminates HTTP, serves static/media files)
+#
+# Usage:
+#   docker compose up --build          # first run / after code changes
+#   docker compose up -d               # start in background (detached)
+#   docker compose down                # stop and remove containers
+#   docker compose logs -f web         # tail Django logs
+#   docker compose exec web bash       # open a shell inside the web container
+#   docker compose exec web python manage.py createsuperuser
+#
+# How services communicate:
+#   Containers on the same Docker network can reach each other by SERVICE NAME.
+#   So Django uses DB_HOST=db  (the service name), not 127.0.0.1.
+#   Nginx proxies http://web:8000  (the service name).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL database ─────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine          # Alpine variant is ~50 MB smaller
+    container_name: jobboard_db
+    restart: unless-stopped            # restart if it crashes, stop when you ask
+    volumes:
+      - postgres_data:/var/lib/postgresql/data   # persist DB across restarts
+    environment:
+      POSTGRES_DB: ${DB_NAME:-jobboard}
+      POSTGRES_USER: ${DB_USER:-jobboard_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-jobboard_pass}
+    healthcheck:
+      # Docker waits for this check to pass before marking the service healthy.
+      # The web service's `depends_on.db.condition` waits for this.
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-jobboard_user} -d ${DB_NAME:-jobboard}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"                    # expose to host for DB GUI tools (optional)
+
+  # ── Django application ──────────────────────────────────────────────────────
+  web:
+    build:
+      context: .                       # build context is the project root
+      dockerfile: Dockerfile
+      target: runtime                  # use the runtime stage (not builder)
+    container_name: jobboard_web
+    restart: unless-stopped
+    volumes:
+      - .:/app                         # mount source code for hot-reload in dev
+      - static_volume:/app/staticfiles # shared with nginx to serve static files
+      - media_volume:/app/media        # shared with nginx to serve media uploads
+    env_file:
+      - .env.docker                    # Docker-specific env file (see .env.docker)
+    environment:
+      # Override DB_HOST: inside Docker, use the service name 'db', not localhost.
+      DB_HOST: db
+      DB_ENGINE: postgres
+    depends_on:
+      db:
+        condition: service_healthy     # wait until PostgreSQL passes its healthcheck
+    expose:
+      - "8000"                         # internal only — Nginx proxies this port
+
+  # ── Nginx reverse proxy ─────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: jobboard_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"                        # expose port 80 to the host
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro  # custom config
+      - static_volume:/app/staticfiles:ro   # serve Django's collected static files
+      - media_volume:/app/media:ro          # serve uploaded media files
+    depends_on:
+      - web
+
+# ── Named volumes ───────────────────────────────────────────────────────────
+# Named volumes outlive containers — data is NOT lost on `docker compose down`.
+# To wipe the database: docker compose down -v
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

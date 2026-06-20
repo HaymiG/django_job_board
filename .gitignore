@@ -17,11 +17,15 @@ db.sqlite3
 media/
 staticfiles/
 
-# Env files
+# Env files — .env.docker is safe to commit (placeholder values only)
 .env
+
+# Coverage / test artifacts
+.coverage
+htmlcov/
+coverage.xml
 
 # OS / Editor
 .DS_Store
 .idea/
 .vscode/
-

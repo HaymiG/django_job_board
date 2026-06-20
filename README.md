@@ -3,11 +3,13 @@
 A full-stack job board platform built with Django and PostgreSQL. Employers can post and manage job listings, while job seekers can browse, search, save, and apply — with email notifications throughout.
 
 [![CI](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml/badge.svg)](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml)
+[![Docker Build](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml/badge.svg?job=docker-build)](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat-square&logo=python)
 ![Django](https://img.shields.io/badge/Django-6.x-green?style=flat-square&logo=django)
 ![DRF](https://img.shields.io/badge/DRF-3.16-red?style=flat-square&logo=django)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple?style=flat-square&logo=bootstrap)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker)
 
 ---
 
@@ -40,14 +42,80 @@ A full-stack job board platform built with Django and PostgreSQL. Employers can 
 | Layer | Technology |
 |---|---|
 | Backend | Django 6, Python 3.12 |
-| Database | PostgreSQL |
+| Database | PostgreSQL 16 |
 | Frontend | Bootstrap 5.3, HTML, Vanilla CSS |
 | API | Django REST Framework 3.16 |
 | Charts | Chart.js 4 |
 | Email | Django email backend (console / Gmail SMTP) |
 | File Storage | Django MEDIA files |
+| Web Server | Gunicorn + Nginx |
+| Containerization | Docker + Docker Compose |
+| Static Files | Whitenoise (with Brotli/gzip compression) |
+| CI/CD | GitHub Actions |
 
 ---
+
+##  Docker Quick Start
+
+The fastest way to run the full stack (Django + PostgreSQL + Nginx) locally:
+
+```bash
+# 1. Clone and enter the project
+git clone https://github.com/HaymiG/django_job_board.git
+cd django_job_board
+
+# 2. Copy the Docker env file and set your secret key
+cp .env.docker .env.docker.local
+# Edit .env.docker.local and set DJANGO_SECRET_KEY to something random
+
+# 3. Start the stack (builds the image on first run)
+docker compose up --build
+
+# The app is now running at http://localhost:8000  (dev server, auto-reload)
+# Nginx + Gunicorn (production mode):  http://localhost:80
+
+# 4. Create a superuser (in a second terminal)
+docker compose exec web python manage.py createsuperuser
+```
+
+### Useful Docker commands
+
+```bash
+# Start in the background
+docker compose up -d
+
+# View Django logs
+docker compose logs -f web
+
+# Run Django management commands
+docker compose exec web python manage.py shell
+docker compose exec web python manage.py migrate
+
+# Run the test suite inside the container
+docker compose exec web python manage.py test accounts jobs
+
+# Stop everything (data is preserved in volumes)
+docker compose down
+
+# Stop and WIPE the database
+docker compose down -v
+```
+
+### Stack architecture
+
+```
+[Browser]
+    │ :80
+    ▼
+[Nginx]  ──/static/──▶  staticfiles volume
+    │    ──/media/───▶   media volume
+    │  proxy_pass
+    ▼
+[Gunicorn :8000]  (Django app — 3 workers)
+    │
+    ▼
+[PostgreSQL :5432]  (named volume: postgres_data)
+```
 
 ##  Getting Started
 

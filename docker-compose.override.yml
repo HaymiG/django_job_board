@@ -1,0 +1,24 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.override.yml — Local Development Overrides
+#
+# Docker Compose automatically merges this file with docker-compose.yml
+# when you run `docker compose up`. You do NOT need to specify -f.
+#
+# What this does differently from production:
+#   • Replaces gunicorn with Django's dev server (auto-reloads on file changes)
+#   • Binds port 8000 directly to your host so you can skip Nginx in dev
+#   • Disables the nginx service in dev (comment out the whole nginx block)
+#
+# To use the full production stack locally (with Nginx):
+#   docker compose -f docker-compose.yml up --build
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  web:
+    # Override the CMD from Dockerfile to use Django's runserver in development.
+    # runserver auto-reloads when you edit .py files — no rebuild needed.
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"   # expose directly to host — visit http://localhost:8000
+    environment:
+      DJANGO_DEBUG: "1"

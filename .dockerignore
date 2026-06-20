@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .dockerignore — files excluded from the Docker build context
+#
+# Docker sends everything in the build context to the daemon before building.
+# Excluding large/unnecessary files keeps the build fast and the image clean.
+#
+# Rule of thumb: exclude anything you would put in .gitignore, plus
+# any files that are never needed inside the container.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+
+# Virtual environments — the container builds its own in /opt/venv
+venv/
+.venv/
+env/
+
+# Django runtime artifacts (generated inside the container, not baked in)
+db.sqlite3
+staticfiles/
+media/
+*.log
+
+# Environment files — secrets are injected at runtime, never baked into images
+.env
+.env.docker
+
+# Git history — not needed in the image
+.git/
+.gitignore
+
+# Test / coverage artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+
+# OS / editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker files themselves (already in the context, no need to recurse)
+docker-compose*.yml
+Dockerfile*
+
+# CI
+.github/

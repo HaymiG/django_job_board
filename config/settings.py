@@ -72,6 +72,11 @@ LOGIN_REDIRECT_URL = "accounts:profile"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # WhiteNoise serves compressed static files efficiently in production.
+    # Must be placed immediately after SecurityMiddleware.
+    # In Docker, Nginx handles /static/ directly, but Whitenoise is the
+    # fallback when running without Nginx (e.g. Railway, Render one-dyno setups).
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -170,11 +175,41 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
+# STATIC_ROOT: where `collectstatic` writes files — served by Nginx / Whitenoise.
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Whitenoise: serve compressed static files with long-lived browser cache headers.
+# CompressedManifestStaticFilesStorage requires `collectstatic` to have run, so
+# we only enable it in production (DEBUG=False). Tests and the dev server use the
+# plain default, which doesn't need a manifest file.
+if DEBUG:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+else:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
 
 # Media files (user uploads: resumes, etc.)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# ── Reverse-proxy trust (Nginx → Gunicorn) ────────────────────────────────────
+# Tell Django to trust the X-Forwarded-For and X-Forwarded-Proto headers
+# set by Nginx. Without this, request.is_secure() and CSRF checks break
+# when the app sits behind a proxy.
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# CSRF trusted origins — required when DEBUG=False and requests come through Nginx.
+# Add your production domain here when deploying.
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost",
+    "http://127.0.0.1",
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 

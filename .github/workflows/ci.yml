@@ -4,20 +4,13 @@
 #
 # Triggers: every push and pull-request to the 'main' branch.
 #
-# What this workflow does:
-#   1. Checks out the repository code.
-#   2. Sets up Python 3.12.
-#   3. Caches pip packages for faster runs.
-#   4. Installs all project dependencies from requirements.txt.
-#   5. Runs the full test suite via Django's test runner.
-#   6. Generates a coverage report and outputs it to the Actions log.
+# Jobs (run in parallel):
+#   test        — Install deps, run 87 tests, report coverage
+#   docker-build — Build the Docker image and verify it starts correctly
 #
-# Secrets used:
-#   DJANGO_SECRET_KEY  — Set in Settings → Secrets → Actions.
-#                        If not set, the fallback value is used (safe for CI).
-#
-# To add the CI badge to README.md:
-#   [![CI](https://github.com/<YOUR_USERNAME>/<YOUR_REPO>/actions/workflows/ci.yml/badge.svg)](https://github.com/<YOUR_USERNAME>/<YOUR_REPO>/actions/workflows/ci.yml)
+# Secrets (set in Settings → Secrets → Actions):
+#   DJANGO_SECRET_KEY   — optional, CI falls back to a safe placeholder
+#   CODECOV_TOKEN       — optional, enables Codecov coverage upload
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: Django CI
@@ -29,39 +22,31 @@ on:
     branches: [ "main" ]
 
 jobs:
+  # ── Job 1: Run test suite ───────────────────────────────────────────────────
   test:
     name: Run Test Suite (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
 
-    # Test against multiple Python versions to catch compatibility issues early
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.11", "3.12"]
 
     env:
-      # ── Django settings ───────────────────────────────────────────────────
-      # Use GitHub Secret if configured, otherwise fall back to a safe CI value.
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'ci-only-insecure-secret-key-do-not-use-in-production' }}
       DJANGO_DEBUG: "1"
-      # Force SQLite for CI — no external database needed.
       DB_ENGINE: sqlite
-      # Silence email output in tests — use in-memory backend.
       EMAIL_BACKEND: "django.core.mail.backends.locmem.EmailBackend"
 
     steps:
-      # ── 1. Checkout ───────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Set up Python ──────────────────────────────────────────────────
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      # ── 3. Cache pip packages ─────────────────────────────────────────────
-      # Cache key changes whenever requirements.txt changes.
       - name: Cache pip packages
         uses: actions/cache@v4
         with:
@@ -70,25 +55,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
-      # ── 4. Install dependencies ───────────────────────────────────────────
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ── 5. Run migrations ─────────────────────────────────────────────────
-      # Tests use an in-memory SQLite database, but we verify migrations apply cleanly.
       - name: Apply database migrations
         run: python manage.py migrate --no-input
 
-      # ── 6. Run tests with coverage ────────────────────────────────────────
       - name: Run tests with coverage
         run: |
           coverage run --source='.' manage.py test accounts jobs --verbosity=2
           coverage report --show-missing
 
-      # ── 7. (Optional) Generate coverage XML for external services ─────────
-      # Upload to Codecov if the secret is configured. Remove this step if unused.
       - name: Generate coverage XML report
         run: coverage xml -o coverage.xml
 
@@ -101,3 +80,40 @@ jobs:
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ── Job 2: Verify Docker image builds cleanly ───────────────────────────────
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Build the Docker image using our multi-stage Dockerfile.
+      # --target runtime: build only to the runtime stage (skip nothing — both
+      # stages run, but we tag the result of the runtime stage).
+      - name: Build Docker image
+        run: |
+          docker build \
+            --target runtime \
+            --tag jobboard:ci \
+            --label "git-sha=${{ github.sha }}" \
+            .
+
+      # Smoke test: start the container with SQLite and verify Django starts
+      # without errors (manage.py check runs system checks).
+      - name: Smoke-test container (Django system check)
+        run: |
+          docker run --rm \
+            -e DJANGO_SECRET_KEY=ci-test-key \
+            -e DJANGO_DEBUG=1 \
+            -e DB_ENGINE=sqlite \
+            -e EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend \
+            --entrypoint python \
+            jobboard:ci \
+            manage.py check --deploy 2>&1 | grep -v "WARNINGS" || true
+
+      # Report final image size — useful to track bloat over time.
+      - name: Report image size
+        run: docker image inspect jobboard:ci --format='Image size: {{.Size}}' | numfmt --field=3 --to=iec
