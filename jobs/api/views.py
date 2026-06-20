@@ -6,14 +6,14 @@ What is a ViewSet?
 A ViewSet is a class that groups related API actions together.
 DRF maps HTTP methods to actions automatically:
 
-  HTTP Method   | Action        | URL
-  ─────────────────────────────────────────────────────────
-  GET  /jobs/   | list()        | returns paginated list
-  POST /jobs/   | create()      | creates a new object
-  GET  /jobs/1/ | retrieve()    | returns single object
-  PUT  /jobs/1/ | update()      | full update
-  PATCH /jobs/1/| partial_update| partial update
-  DELETE /jobs/1/| destroy()    | delete
+HTTP Method   | Action        | URL
+─────────────────────────────────────────────────────────
+GET  /jobs/   | list()        | returns paginated list
+POST /jobs/   | create()      | creates a new object
+GET  /jobs/1/ | retrieve()    | returns single object
+PUT  /jobs/1/ | update()      | full update
+PATCH /jobs/1/| partial_update| partial update
+DELETE /jobs/1/| destroy()    | delete
 
 ReadOnlyModelViewSet gives only list + retrieve — perfect for public endpoints
 like the jobs list that shouldn't be editable via the API.

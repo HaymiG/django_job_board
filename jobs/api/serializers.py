@@ -7,8 +7,8 @@ A serializer converts between complex Python objects (Django model instances,
 QuerySets) and primitive data types (dicts, lists) that can then be rendered
 into JSON or XML for an HTTP response.
 
-  ORM object ──(serialize)──▶ Python dict ──▶ JSON  (outbound)
-  JSON        ──(parse)──────▶ Python dict ──▶ save() (inbound)
+ORM object ──(serialize)──▶ Python dict ──▶ JSON  (outbound)
+JSON        ──(parse)──────▶ Python dict ──▶ save() (inbound)
 
 ModelSerializer is a shortcut that auto-generates fields from the model's
 field definitions — you only need to declare Meta.model and Meta.fields.
