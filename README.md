@@ -2,6 +2,7 @@
 
 A full-stack job board platform built with Django and PostgreSQL. Employers can post and manage job listings, while job seekers can browse, search, save, and apply — with email notifications throughout.
 
+[![CI](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml/badge.svg)](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat-square&logo=python)
 ![Django](https://img.shields.io/badge/Django-6.x-green?style=flat-square&logo=django)
 ![DRF](https://img.shields.io/badge/DRF-3.16-red?style=flat-square&logo=django)
@@ -246,9 +247,31 @@ In development, emails print to the terminal (no SMTP needed). Switch to Gmail f
 
 ##  Running Tests
 
+### Run the full test suite
+
 ```bash
-python manage.py test
+python manage.py test accounts jobs --verbosity=2
 ```
+
+### Run with coverage report
+
+```bash
+coverage run --source='.' manage.py test accounts jobs
+coverage report --show-missing   # terminal summary
+coverage html                    # open htmlcov/index.html in a browser
+```
+
+### Test suite overview
+
+| Module | File | What is tested |
+|---|---|---|
+| `accounts` | `tests/test_models.py` | User creation, roles, defaults |
+| `accounts` | `tests/test_auth.py` | Register, login (role redirect), logout |
+| `accounts` | `tests/test_views.py` | Profile, employer/seeker dashboards, analytics, permissions |
+| `jobs` | `tests/test_models.py` | Company, Job, Application models; constraints; M2M |
+| `jobs` | `tests/test_views.py` | Home, job list (search/filter), detail, create, edit, delete |
+| `jobs` | `tests/test_applications.py` | Apply, view applicants, update status, permission boundaries |
+| `jobs` | `tests/test_saved_jobs.py` | Toggle save (regular + AJAX), saved list, isolation |
 
 ---
 

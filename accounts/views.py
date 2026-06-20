@@ -84,7 +84,8 @@ def employer_dashboard(request):
     jobs = []
     total_applications = 0
     pending_applications = 0
-    
+    total_views = 0  # initialised here so it's always defined in context
+
     if company:
         jobs = company.jobs.all()
         # Count total applications for this employer's jobs
