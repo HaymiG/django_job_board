@@ -4,7 +4,7 @@ A full-stack job board platform built with Django and PostgreSQL. Employers can 
 
 [![CI](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml/badge.svg)](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml)
 [![Docker Build](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml/badge.svg?job=docker-build)](https://github.com/HaymiG/django_job_board/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat-square&logo=python)
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue?style=flat-square&logo=python)
 ![Django](https://img.shields.io/badge/Django-6.x-green?style=flat-square&logo=django)
 ![DRF](https://img.shields.io/badge/DRF-3.16-red?style=flat-square&logo=django)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql)

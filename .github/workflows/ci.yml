@@ -30,7 +30,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        # Django 6.0 requires Python 3.12+ — 3.11 is not supported.
+        # We test on 3.12 (current stable) and 3.13 (latest).
+        python-version: ["3.12", "3.13"]
 
     env:
       DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'ci-only-insecure-secret-key-do-not-use-in-production' }}
