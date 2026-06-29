@@ -44,4 +44,5 @@ jobs:
 
       # Report final image size
       - name: Report image size
-        run: docker image inspect jobboard:ci --format='Image size: {{.Size}}' | numfmt --field=3 --to=iec
+        run: |
+          docker image inspect jobboard:ci --format='Image size: {{.Size}}' | numfmt --field=3 --to=iec
