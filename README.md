@@ -64,9 +64,9 @@ The fastest way to run the full stack (Django + PostgreSQL + Nginx) locally:
 git clone https://github.com/HaymiG/django_job_board.git
 cd django_job_board
 
-# 2. Copy the Docker env file and set your secret key
-cp .env.docker .env.docker.local
-# Edit .env.docker.local and set DJANGO_SECRET_KEY to something random
+# 2. Create your Docker env file from the example template
+cp .env.docker.example .env.docker
+# Open .env.docker and set DJANGO_SECRET_KEY to a long random string
 
 # 3. Start the stack (builds the image on first run)
 docker compose up --build
