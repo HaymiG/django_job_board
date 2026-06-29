@@ -1,4 +1,4 @@
-# Python
+# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *.pyo
@@ -6,26 +6,30 @@ __pycache__/
 *.so
 .Python
 
-# Virtual environments
+# ── Virtual environments ──────────────────────────────────────────────────────
 venv/
 .venv/
 env/
 
-# Django
+# ── Django ────────────────────────────────────────────────────────────────────
 *.log
 db.sqlite3
 media/
 staticfiles/
 
-# Env files — .env.docker is safe to commit (placeholder values only)
+# ── Env / secrets — NEVER commit real credentials ────────────────────────────
+# .env.docker.example and .env.example are safe (placeholder values only)
 .env
+.env.docker
+.env.docker.local
 
-# Coverage / test artifacts
+# ── Coverage / test artifacts ─────────────────────────────────────────────────
 .coverage
 htmlcov/
 coverage.xml
 
-# OS / Editor
+# ── OS / Editor ───────────────────────────────────────────────────────────────
 .DS_Store
 .idea/
 .vscode/
+Thumbs.db

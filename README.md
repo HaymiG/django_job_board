@@ -5,7 +5,7 @@ A full-stack job board platform built with Django and PostgreSQL. Employers can 
 [![Tests](https://github.com/HaymiG/django_job_board/actions/workflows/tests.yml/badge.svg)](https://github.com/HaymiG/django_job_board/actions/workflows/tests.yml)
 [![Docker Build](https://github.com/HaymiG/django_job_board/actions/workflows/docker-build.yml/badge.svg)](https://github.com/HaymiG/django_job_board/actions/workflows/docker-build.yml)
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue?style=flat-square&logo=python)
-![Django](https://img.shields.io/badge/Django-6.x-green?style=flat-square&logo=django)
+![Django](https://img.shields.io/badge/Django-6.0.5-green?style=flat-square&logo=django)
 ![DRF](https://img.shields.io/badge/DRF-3.16-red?style=flat-square&logo=django)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=flat-square&logo=postgresql)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple?style=flat-square&logo=bootstrap)
@@ -129,7 +129,7 @@ docker compose down -v
 
 ```bash
 git clone https://github.com/HaymiG/django_job_board.git
-cd django-job-board
+cd django_job_board
 ```
 
 ### 2. Create and activate a virtual environment
@@ -288,10 +288,33 @@ username=alice & password=secret
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `GET` | `/api/applications/` | Yes | My applications |
-| `POST` | `/api/applications/` | Yes | Submit a new application |
+| `GET` | `/api/applications/` | Yes | List my applications |
+| `POST` | `/api/applications/` | Yes | Submit a new application (with PDF resume) |
 | `GET` | `/api/applications/{id}/` | Yes | Single application detail |
 | `DELETE` | `/api/applications/{id}/` | Yes | Withdraw an application |
+
+**Submitting an application** requires `multipart/form-data` (not JSON) because of the file upload:
+
+```bash
+curl -X POST http://localhost:8000/api/applications/ \
+  -H "Authorization: Token <your-token>" \
+  -F "job=42" \
+  -F "cover_letter=I am a great fit because..." \
+  -F "resume=@/path/to/my-cv.pdf"
+# Returns: full Application object with id, status, created_at, ...
+```
+
+**Resume validation rules (enforced server-side):**
+- File extension must be `.pdf`
+- MIME / content type must be `application/pdf`
+- Maximum file size: **5 MB**
+- Validation errors return HTTP `400` with a JSON error body
+
+```json
+// Example 400 error response
+{"resume": ["Only PDF files are accepted."]}
+{"resume": ["File size must be under 5 MB."]}
+```
 
 ### Browsable API
 

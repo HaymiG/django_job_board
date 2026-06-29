@@ -41,7 +41,7 @@ services:
       timeout: 5s
       retries: 10
     ports:
-      - "5432:5432"                    # expose to host for DB GUI tools (optional)
+      - "5433:5432"                    # expose to host for DB GUI tools (optional — avoids conflict with local PostgreSQL)
 
   # ── Django application ──────────────────────────────────────────────────────
   web:
