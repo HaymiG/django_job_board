@@ -2,17 +2,17 @@
 jobs/emails.py — Centralised email sending helpers.
 
 How Django email works:
-  1. Django's `send_mail()` / `EmailMultiAlternatives` build the message.
-  2. They hand it off to whatever EMAIL_BACKEND is configured in settings.
-  3. In development we use `console.EmailBackend` → printed to the terminal.
-  4. In production we swap to `smtp.EmailBackend` and point at a real SMTP
-     server (Gmail, SendGrid, Mailgun, etc.) via the EMAIL_* env vars.
+1. Django's `send_mail()` / `EmailMultiAlternatives` build the message.
+2. They hand it off to whatever EMAIL_BACKEND is configured in settings.
+3. In development we use `console.EmailBackend` → printed to the terminal.
+4. In production we swap to `smtp.EmailBackend` and point at a real SMTP
+    server (Gmail, SendGrid, Mailgun, etc.) via the EMAIL_* env vars.
 
-     send_mail(subject, plain_body, from_email, [recipient_list])
-                                    ↓
-                          EMAIL_BACKEND (console / SMTP)
-                                    ↓
-                             Recipient inbox
+    send_mail(subject, plain_body, from_email, [recipient_list])
+                                ↓
+                        EMAIL_BACKEND (console / SMTP)
+                                ↓
+                            Recipient inbox
 """
 
 from django.conf import settings

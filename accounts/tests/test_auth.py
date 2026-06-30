@@ -4,13 +4,13 @@ accounts/tests/test_auth.py
 Authentication flow tests: register, login, logout.
 
 What we test:
-  • GET register page returns 200
-  • Successful registration creates a user and redirects
-  • Duplicate username returns form error
-  • GET login page returns 200
-  • Valid credentials log the user in and redirect by role
-  • Invalid credentials stay on the login page
-  • Logout clears the session
+• GET register page returns 200
+• Successful registration creates a user and redirects
+• Duplicate username returns form error
+• GET login page returns 200
+• Valid credentials log the user in and redirect by role
+• Invalid credentials stay on the login page
+• Logout clears the session
 """
 
 from django.test import Client, TestCase
