@@ -150,20 +150,20 @@ def employer_analytics(request):
     annotate() adds a computed column to EVERY ROW of the QuerySet.
     Django translates it into a SQL expression added to the SELECT clause.
 
-      Job.objects
+        Job.objects
         .annotate(
             application_count=Count("applications"),  # per-job count
             total_views=Sum("views"),                 # same as .views but via annotation
         )
 
-    This is equivalent to:
-      SELECT jobs_job.*, COUNT(jobs_application.id) AS application_count
-      FROM jobs_job
-      LEFT JOIN jobs_application ON jobs_application.job_id = jobs_job.id
-      GROUP BY jobs_job.id
+        This is equivalent to:
+        SELECT jobs_job.*, COUNT(jobs_application.id) AS application_count
+        FROM jobs_job
+        LEFT JOIN jobs_application ON jobs_application.job_id = jobs_job.id
+        GROUP BY jobs_job.id
 
     aggregate() (used at the end) collapses the WHOLE QuerySet to one dict:
-      Application.objects.aggregate(avg_per_job=Avg("job__applications__count"))
+        Application.objects.aggregate(avg_per_job=Avg("job__applications__count"))
     """
     company = getattr(request.user, "company", None)
     if not company:
