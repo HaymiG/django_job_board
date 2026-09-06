@@ -171,7 +171,7 @@ DB_PORT=5432
 
 # Email — console prints to terminal (no config needed in dev)
 EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-DEFAULT_FROM_EMAIL=JobBoard <noreply@jobboard.local>
+DEFAULT_FROM_EMAIL=JobBoard noreply@jobboard.local
 
 # To use real Gmail delivery instead:
 # EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
